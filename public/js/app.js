@@ -117,9 +117,19 @@ var app = new Vue({
 		addLike: function (id) {
 			var self= this;
 			axios
-				.get('/main_page/like')
+				.post('/like', {
+					post_id: id,
+				})
 				.then(function (response) {
-					self.likes = response.data.likes;
+					var data = response.data;
+
+					if(data && typeof data.status !== 'undefined') {
+						if(data.status === 'error') {
+							self.errorNotification(data.error_message);
+						} else {
+							self.likes = response.data.likes;
+						}
+					}
 				})
 
 		},
@@ -160,11 +170,11 @@ var app = new Vue({
 						jMessage.focus();
 						jMessage.val(this.commentText);
 
-						this.errorNotification(data.error_message);
+						self.errorNotification(data.error_message);
 					} else {
 						jMessage.focus();
 
-						self.post = data.post
+						self.post = data.post;
 					}
 				}
 			});

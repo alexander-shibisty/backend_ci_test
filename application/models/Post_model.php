@@ -294,14 +294,9 @@ class Post_model extends CI_Emerald_Model
         $o->id = $data->get_id();
         $o->img = $data->get_img();
 
-
-//            var_dump($d->get_user()->object_beautify()); die();
-
         $o->user = User_model::preparation($data->get_user(),'main_page');
         $o->coments = Comment_model::preparation($data->get_comments(),'full_info');
-
-        $o->likes = rand(0, 25);
-
+        $o->likes = Rating_model::all_post_likes($data->get_id());
 
         $o->time_created = $data->get_time_created();
         $o->time_updated = $data->get_time_updated();

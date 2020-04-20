@@ -55,6 +55,7 @@ $route['default_controller'] = 'main_page';
 
 $route['login']['POST'] = 'main_page/login';
 $route['comment']['POST'] = 'main_page/comment';
+$route['like']['POST'] = 'main_page/like';
 
 $route['404_override'] = 'api/error_404';
 $route['404'] = 'api/error_404';

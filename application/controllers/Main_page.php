@@ -16,6 +16,7 @@ class Main_page extends MY_Controller
         App::get_ci()->load->model('User_model');
         App::get_ci()->load->model('Login_model');
         App::get_ci()->load->model('Post_model');
+        App::get_ci()->load->model('Rating_model');
 
         if (is_prod())
         {
@@ -196,8 +197,52 @@ class Main_page extends MY_Controller
 
 
     public function like(){
+        if(!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_DISABLED);
+        }
+
+        $this->load->helper(array('form', 'array'));
+        $this->load->library('form_validation');
+        
+        // Validation rules
+        $config = [
+            [
+                'field' => 'post_id',
+                'label' => 'Post ID',
+                'rules' => 'required'
+            ]
+        ];
+
+        // Validate
+        $request_data = $this->get_json_post_body();
+
+        $this->form_validation->set_data($request_data);
+        $this->form_validation->set_rules($config);
+        if($this->form_validation->run() === false){
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+
+        $post_id = (int)element('post_id', $request_data);
+        if(!Post_model::has_post($post_id)) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+        
+        $user_id = User_model::get_session_id();
+        if(Rating_model::has_like($post_id, $user_id)) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+
+        try {
+            Rating_model::create([
+                'post_id' => $post_id,
+                'user_id' => $user_id,
+            ]);
+        } catch(Exaption $error) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_TRY_LATER);
+        }
+        
         // todo: add like post\comment logic
-        return $this->response_success(['likes' => rand(1,55)]); // Колво лайков под постом \ комментарием чтобы обновить
+        return $this->response_success(['likes' => Rating_model::all_post_likes($post_id)]);
     }
 
     private function get_json_post_body(): ?array {
