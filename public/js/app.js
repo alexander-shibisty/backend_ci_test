@@ -37,11 +37,7 @@ var app = new Vue({
 		var errorMessage = this.getUrlParam('error');
 		
 		if(errorMessage !== null && errorMessage !== '') {
-			new Noty({
-				type: 'success',
-				layout: 'topRight',
-				text: errorMessage,
-			}).show();
+			this.errorNotification(errorMessage);
 		}
 	},
 	created(){
@@ -141,11 +137,50 @@ var app = new Vue({
 					}
 				})
 		},
+		addComment: function(event) {
+			var self = this;
+
+			event.preventDefault();
+			var jForm = $(event.target);
+			var jMessage = jForm.find('[name="message"]');
+			var jPostId = jForm.find('[name="post_id"]');
+
+			this.commentText = jMessage.val();
+			jMessage.val('');
+			jMessage.blur();
+
+			axios.post('/comment', {
+				'post_id': jPostId.val(),
+				'message': this.commentText,
+			}).then(function(response) {
+				var data = response.data;
+
+				if(data && typeof data.status !== 'undefined') {
+					if(data.status === 'error') {
+						jMessage.focus();
+						jMessage.val(this.commentText);
+
+						this.errorNotification(data.error_message);
+					} else {
+						jMessage.focus();
+
+						self.post = data.post;
+					}
+				}
+			});
+		},
 
 		getUrlParam: function(paramName) {
 			var urlParams = new URLSearchParams(document.location.search);
 
 			return urlParams.get(paramName);
+		},
+		errorNotification: function(message) {
+			new Noty({
+				type: 'error',
+				layout: 'topRight',
+				text: message,
+			}).show();
 		}
 	}
 });

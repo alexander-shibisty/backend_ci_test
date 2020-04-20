@@ -181,10 +181,11 @@
                 </div>
               </div>
               <p class="card-text" v-for="comment in post.coments"> {{comment.user.personaname + ' - '}}<small class="text-muted">{{comment.text}}</small></p>
-              <form class="form-inline">
+              <form class="form-inline" v-on:submit="addComment($event)" :id="'comment-form--' + post.id" method="POST">
                 <div class="form-group">
-                  <input type="text" class="form-control" id="addComment" v-model="commentText">
+                  <input type="text" class="form-control" name="message">
                 </div>
+                <input type="hidden" :value="post.id" name="post_id">
                 <button type="submit" class="btn btn-primary">Add comment</button>
               </form>
             </div>

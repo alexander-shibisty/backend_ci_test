@@ -59,25 +59,62 @@ class Main_page extends MY_Controller
     }
 
 
-    public function comment($post_id,$message){ // or can be App::get_ci()->input->post('news_id') , but better for GET REQUEST USE THIS ( tests )
-
+    public function comment()
+    { // or can be App::get_ci()->input->post('news_id') , but better for GET REQUEST USE THIS ( tests )
         if (!User_model::is_logged()){
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
         }
 
-        $post_id = intval($post_id);
+        $this->load->helper(array('form', 'array'));
+        $this->load->library('form_validation');
 
-        if (empty($post_id) || empty($message)){
+        // Validation rules
+        $config = [
+            [
+                'field' => 'post_id',
+                'label' => 'Post ID',
+                'rules' => 'required'
+            ],
+            [
+                'field' => 'message',
+                'label' => 'Comment',
+                'rules' => 'required|min_length[2]'
+            ],
+        ];
+
+        $request_data = $this->get_json_post_body();
+
+        $this->form_validation->set_data($request_data);
+        $this->form_validation->set_rules($config);
+        if($this->form_validation->run() === false){
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
+        $post_id = (int)element('post_id', $request_data);
+        if(!Post_model::has_post($post_id)) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+
+        $user_id = User_model::get_session_id();
+        $message = (string)element('message', $request_data);
+
+        try {
+            Comment_model::create([
+                'assign_id' => $post_id,
+                'user_id' => $user_id,
+                'text' => $message,
+            ]);
+        } catch(Exaption $error) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_TRY_LATER);
+        }
+
+        $post = null;
         try
         {
             $post = new Post_model($post_id);
         } catch (EmeraldModelNoDataException $ex){
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
         }
-
 
         $posts =  Post_model::preparation($post, 'full_info');
         return $this->response_success(['post' => $posts]);
@@ -108,8 +145,7 @@ class Main_page extends MY_Controller
         ];
 
         // Validate
-        $request_data = $this->security->xss_clean($this->input->raw_input_stream);
-        $request_data = json_decode($request_data, true, 512, JSON_OBJECT_AS_ARRAY);
+        $request_data = $this->get_json_post_body();
 
         $this->form_validation->set_data($request_data);
         $this->form_validation->set_rules($config);
@@ -162,6 +198,13 @@ class Main_page extends MY_Controller
     public function like(){
         // todo: add like post\comment logic
         return $this->response_success(['likes' => rand(1,55)]); // Колво лайков под постом \ комментарием чтобы обновить
+    }
+
+    private function get_json_post_body(): ?array {
+        $request_data = $this->security->xss_clean($this->input->raw_input_stream);
+        $request_data = json_decode($request_data, true, 512, JSON_OBJECT_AS_ARRAY);
+
+        return $request_data;
     }
 
 }

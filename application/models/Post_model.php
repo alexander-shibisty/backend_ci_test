@@ -215,6 +215,26 @@ class Post_model extends CI_Emerald_Model
     }
 
     /**
+     * @return self[]
+     * @throws Exception
+     */
+    public static function get_once(array $params): array {
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where($params)->one();
+
+        return $data;
+    }
+
+    /**
+     * @return bool
+     * @throws Exception
+     */
+    public static function has_post(int $post_id): bool {
+        $data = self::get_once(['id' => $post_id]);
+
+        return count($data) > 0;
+    }
+
+    /**
      * @param Post_model|Post_model[] $data
      * @param string $preparation
      * @return stdClass|stdClass[]
