@@ -164,7 +164,7 @@ var app = new Vue({
 					} else {
 						jMessage.focus();
 
-						self.post = data.post;
+						self.post = data.post
 					}
 				}
 			});
