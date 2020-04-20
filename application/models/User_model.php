@@ -269,6 +269,16 @@ class User_model extends CI_Emerald_Model {
         return $ret;
     }
 
+    /**
+     * @return self[]
+     * @throws Exception
+     */
+    public static function get_once(array $params): array {
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where($params)->one();
+
+        return $data;
+    }
+
 
     /**
      * @param User_model|User_model[] $data
@@ -350,6 +360,7 @@ class User_model extends CI_Emerald_Model {
     public static function is_logged()
     {
         $steam_id = intval(self::get_session_id());
+
         return $steam_id > 0;
     }
 

@@ -84,19 +84,57 @@ class Main_page extends MY_Controller
     }
 
 
-    public function login($user_id)
+    public function login()
     {
-        // Right now for tests:
-        $post_id = intval($user_id);
+        if(User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_DISABLED);
+        }
 
-        if (empty($post_id)){
+        $this->load->helper(array('form', 'array'));
+        $this->load->library('form_validation');
+        
+        // Validation rules
+        $config = [
+            [
+                'field' => 'login',
+                'label' => 'Login',
+                'rules' => 'required|min_length[2]'
+            ],
+            [
+                'field' => 'password',
+                'label' => 'Password',
+                'rules' => 'required|min_length[6]'
+            ],
+        ];
+
+        // Validate
+        $request_data = $this->security->xss_clean($this->input->raw_input_stream);
+        $request_data = json_decode($request_data, true, 512, JSON_OBJECT_AS_ARRAY);
+
+        $this->form_validation->set_data($request_data);
+        $this->form_validation->set_rules($config);
+        if($this->form_validation->run() === false){
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
-        // But data from modal window sent by POST request.  App::get_ci()->input...  to get it.
+        $login = element('login', $request_data);
+        $password = element('password', $request_data);
 
-
-        //Todo: Authorisation
+        // Get user info
+        $user = null;
+        try {
+            $user = User_model::get_once([
+                'email' => $login,
+                'password' => $password,
+            ]);
+        } catch(Exaption $error) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_TRY_LATER);
+        }
+        
+        $user_id = (int)element('id', $user);
+        if ($user_id === 0){
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
 
         Login_model::start_session($user_id);
 

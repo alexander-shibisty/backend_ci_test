@@ -57,3 +57,9 @@
     margin-right: 5px;
 }
 
+.noty_bar {
+    background: red;
+    padding: 10px;
+    border-radius: 4px;
+    color: #fff;
+}

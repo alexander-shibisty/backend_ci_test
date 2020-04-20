@@ -33,6 +33,17 @@ var app = new Vue({
 			return data;
 		}
 	},
+	mounted: function() {
+		var errorMessage = this.getUrlParam('error');
+		
+		if(errorMessage !== null && errorMessage !== '') {
+			new Noty({
+				type: 'success',
+				layout: 'topRight',
+				text: errorMessage,
+			}).show();
+		}
+	},
 	created(){
 		var self = this
 		axios
@@ -57,14 +68,23 @@ var app = new Vue({
 			else{
 				self.invalidLogin = false
 				self.invalidPass = false
-				axios.post('/main_page/login', {
+				axios.post('/login', {
 					login: self.login,
 					password: self.pass
 				})
 					.then(function (response) {
-						setTimeout(function () {
-							$('#loginModal').modal('hide');
-						}, 500);
+						var data = response.data;
+
+						if(data && typeof data.status !== 'undefined') {
+							if(data.status === 'error') {
+								document.location.href = document.location.pathname 
+									+ '?error=' 
+									+ data.error_message;
+
+							} else {
+								document.location.reload();
+							}
+						}
 					})
 			}
 		},
@@ -120,6 +140,12 @@ var app = new Vue({
 						}, 500);
 					}
 				})
+		},
+
+		getUrlParam: function(paramName) {
+			var urlParams = new URLSearchParams(document.location.search);
+
+			return urlParams.get(paramName);
 		}
 	}
 });
